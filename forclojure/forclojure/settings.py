@@ -14,6 +14,17 @@ BOT_NAME = 'forclojure'
 SPIDER_MODULES = ['forclojure.spiders']
 NEWSPIDER_MODULE = 'forclojure.spiders'
 
+# Custom Settings
+
+FOURCLJ_SAVE_TO_PG = True
+FOURCLJ_PG_CONFIG = {
+    "user": "liu",
+    "database": "liu",
+    "password": "liu.p",
+    "host": "localhost",
+    "port": 5432
+}
+
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'forclojure (+http://www.yourdomain.com)'

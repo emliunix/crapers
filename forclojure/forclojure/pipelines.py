@@ -7,14 +7,9 @@
 
 import psycopg2
 import forclojure.items
+import logging
 
-dbconfig = {
-    "user": "liu",
-    "database": "liu",
-    "password": "liu.p",
-    "host": "localhost",
-    "port": 5432
-}
+logger = logging.getLogger("PGPipeline")
 
 def initdb(cur):
     """
@@ -38,10 +33,12 @@ def serializeItem(item):
     return data
 
 class DBPipeline(object):
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.q = []
         self.throttle = 20
         self.conn = None
+        self.noop = False
 
     def push(self, item):
         item_seria = serializeItem(item)
@@ -65,18 +62,42 @@ class DBPipeline(object):
         except psycopg2.DatabaseError as err:
             self.q = vals
             self.conn.rollback()
-            print(err)
+            logger.warn("Batch Processing Failed. Data not saved to db.")
+            logger.warn(err)
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        if crawler.settings["FOURCLJ_SAVE_TO_PG"]:
+            logger.info("Data will be saved to pg.")
+            return cls(crawler.settings["FOURCLJ_PG_CONFIG"])
+        else:
+            logger.info("Data will not be saved to pg.")
+            return NoopPipeline()
 
     def open_spider(self, spider):
-        self.conn = psycopg2.connect(**dbconfig)
-        initdb(self.conn.cursor())
-        self.conn.commit()
+        try:
+            self.conn = psycopg2.connect(**self.config)
+        except psycopg2.DatabaseError as err:
+            # so something goes wrong, make this behave like NoopPipeline
+            logger.error("Error connect to db")
+            self.noop = True
+            # self.process_item = NoopPipeline.process_item
+            # del(self.close_spider)
+        else: # if everything is ok
+            initdb(self.conn.cursor())
+            self.conn.commit()
     
     def close_spider(self, spider):
-        self.batchprocess()
-        self.conn.close()
+        if not self.noop:
+            self.batchprocess()
+            self.conn.close()
 
+    #pylint: disable=E0202
     def process_item(self, item, spider):
-        if isinstance(item, forclojure.items.ForclojureItem):
+        if not self.noop and isinstance(item, forclojure.items.ForclojureItem):
             self.push(item)
+        return item
+
+class NoopPipeline(object):
+    def process_item(self, item, spider):
         return item

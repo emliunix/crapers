@@ -22,7 +22,8 @@ def initdb(cur):
         difficulty VARCHAR(20) NOT NULL,
         topics VARCHAR(100)[] DEFAULT '{}',
         author VARCHAR(100) NOT NULL,
-        nsolved INT DEFAULT 0
+        nsolved INT DEFAULT 0,
+        issolved BOOLEAN DEFAULT FALSE
     )""")
 
 def serializeItem(item):
@@ -42,7 +43,7 @@ class DBPipeline(object):
 
     def push(self, item):
         item_seria = serializeItem(item)
-        data = [item_seria[x] for x in ["title", "link", "difficulty", "topics", "author", "nsolved"]]
+        data = [item_seria[x] for x in ["title", "link", "difficulty", "topics", "author", "nsolved", "issolved"]]
         self.q.append(data)
         if len(self.q) >= self.throttle:
             self.batchprocess()
@@ -55,8 +56,8 @@ class DBPipeline(object):
                 self.q = []
 
                 cur.executemany("""
-                INSERT INTO fourcljproblems (title, link, difficulty, topics, author, nsolved)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO fourcljproblems (title, link, difficulty, topics, author, nsolved, issolved)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """, vals)
             self.conn.commit()
         except psycopg2.DatabaseError as err:

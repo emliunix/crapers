@@ -19,3 +19,4 @@ class ForclojureItem(Item):
     topics = Field(serializer=topicSerializer)
     author = Field()
     nsolved = Field(serializer=int)
+    issolved = Field(serializer=bool)

@@ -24,6 +24,8 @@ FOURCLJ_PG_CONFIG = {
     "host": "localhost",
     "port": 5432
 }
+FOURCLJ_USER = "emliunix"
+FOURCLJ_PWD = "clojure.4"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent

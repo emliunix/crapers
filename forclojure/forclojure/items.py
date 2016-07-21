@@ -20,3 +20,9 @@ class ForclojureItem(Item):
     author = Field()
     nsolved = Field(serializer=int)
     issolved = Field(serializer=bool)
+
+class RestrictionItem(Item):
+    pid = Field(serializer=int)
+    title = Field()
+    link = Field()
+    restrictions = Field()
